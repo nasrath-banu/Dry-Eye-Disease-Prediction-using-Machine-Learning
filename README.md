@@ -1,14 +1,14 @@
 Smart Prediction of Dry Eye Disease using Machine Learning
 
 ## 📌 Project Overview
-Briefly explain what the project does and why it is useful.
+Dry Eye Disease (DED) is a common ocular condition that affects tear film stability and ocular surface health. Early identification is important to prevent discomfort, visual disturbances, and long-term complications. This project applies machine learning techniques to predict Dry Eye Disease using clinical and diagnostic features. Multiple classification models, including Random Forest, Support Vector Machine, XGBoost, and LightGBM, are trained and evaluated. To improve model performance and interpretability, various feature selection techniques such as ANOVA F-test, Random Forest feature importance, Mutual Information, and Permutation Importance are implemented and compared.
 
 ## 🎯 Objective
-Clearly state the problem you are solving.
+The objective of this project is to develop an accurate and reliable machine learning-based system for predicting Dry Eye Disease using clinical data. The project aims to evaluate and compare multiple classification algorithms, analyze the impact of different feature selection methods on model performance, and identify the most informative features contributing to disease prediction. The final goal is to build an optimized and interpretable prediction model that can assist in early screening and decision support.
 
 ## 🗂️ Dataset
 - Source: Kaggle
-- Description: Short description of dataset
+- Description: Dataset contains lifestyle and clinical data
 - Format: Excel
 
 ## ⚙️ Technologies Used
@@ -27,9 +27,6 @@ Clearly state the problem you are solving.
 - Model training (Random Forest, XGBoost, LightGBM, SVM)
 - Model evaluation (Accuracy, Precision, Recall, F1-score, ROC-AUC Curve)
 
-## 🚀 Project Deployment
-Live Demo: **[Click Here](PASTE_DEPLOYMENT_LINK_HERE)**
-
 ## 📊 Results
-- Achieved accuracy of XX%
-- Key insights from data analysis
+- comparing the results of four models
+- evaluating the model performance

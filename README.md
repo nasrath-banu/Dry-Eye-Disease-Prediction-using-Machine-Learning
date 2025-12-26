@@ -22,7 +22,8 @@ Clearly state the problem you are solving.
 - Data cleaning and preprocessing
 - Exploratory Data Analysis (EDA)
 - Feature engineering
-- Feature selection using ANOVA F-test, Random Forest Feature Importance, Permutation importance, mutual Information
+- Feature selection using ANOVA F-test, Random Forest Feature Importance, Permutation importance, mutual information
+- CalibratedClassifierCV for accurate probability values
 - Model training (Random Forest, XGBoost, LightGBM, SVM)
 - Model evaluation (Accuracy, Precision, Recall, F1-score, ROC-AUC Curve)
 

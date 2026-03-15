@@ -3,13 +3,15 @@ import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.calibration import CalibratedClassifierCV
 
 # ===========================
 # 🌟 PAGE CONFIG
 # ===========================
 st.set_page_config(page_title="💧 Dry Eye Predictor (Calibrated Models)", layout="centered")
 
-# Apply custom CSS for styling
 st.markdown("""
     <style>
     body {
@@ -44,18 +46,39 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================
-# 📦 LOAD CALIBRATED MODELS + SCALER
+# 📦 LOAD MODELS + TRAIN RF FROM DATASET
 # ===========================
 @st.cache_resource
 def load_artifacts():
-    models = {
-        "Random Forest": joblib.load("dryeye_rf_model_calibrated.joblib"),
-        "SVM": joblib.load("dryeye_svm_model_calibrated.joblib"),
-        "LightGBM": joblib.load("dryeye_lgbm_model_calibrated.joblib"),
-        "XGBoost": joblib.load("dryeye_xgb_model_calibrated.joblib"),
-    }
-    scaler = joblib.load("dryeye_scaler.joblib")
+    # Load feature list and scaler
     features = joblib.load("dryeye_features.joblib")
+    scaler   = joblib.load("dryeye_scaler.joblib")
+
+    # ── Train RF directly from Dataset.xlsx ──
+    df = pd.read_excel("Dataset.xlsx")
+    df.columns = df.columns.str.strip()
+
+    X = df.drop(columns=["Dry Eye Disease"])
+    y = df["Dry Eye Disease"]
+
+    # Keep only features the scaler knows
+    for col in features:
+        if col not in X.columns:
+            X[col] = 0
+    X = X[features]
+    X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
+
+    rf_base       = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_calibrated = CalibratedClassifierCV(rf_base, cv=3, method="sigmoid")
+    rf_calibrated.fit(X, y)
+
+    # Load other pre-trained models
+    models = {
+        "Random Forest": rf_calibrated,
+        "SVM":           joblib.load("dryeye_svm_model_calibrated.joblib"),
+        "LightGBM":      joblib.load("dryeye_lgbm_model_calibrated.joblib"),
+        "XGBoost":       joblib.load("dryeye_xgb_model_calibrated.joblib"),
+    }
     return models, scaler, features
 
 models, scaler, model_features = load_artifacts()
@@ -75,8 +98,8 @@ def align_and_scale(df):
     for c in model_features:
         aligned[c] = df[c] if c in df.columns else 0
     aligned = aligned.apply(pd.to_numeric, errors='coerce').fillna(0)
-    scaled = scaler.transform(aligned)
-    scaled = np.nan_to_num(scaled, nan=0.0, posinf=0.0, neginf=0.0)
+    scaled  = scaler.transform(aligned)
+    scaled  = np.nan_to_num(scaled, nan=0.0, posinf=0.0, neginf=0.0)
     return scaled, aligned
 
 def predict_all_models(scaled):
@@ -104,34 +127,34 @@ with st.form("prediction_form"):
 
     col1, col2 = st.columns(2)
     with col1:
-        eye_strain = st.selectbox("Discomfort / Eye-strain", [1, 0], format_func=lambda x: "Yes" if x else "No")
-        redness = st.selectbox("Redness in eye", [1, 0], format_func=lambda x: "Yes" if x else "No")
-        screen_time = st.number_input("Average screen time (hours/day)", 0.0, 24.0, 6.0, 0.5)
-        physical_activity = st.number_input("Physical activity (minutes/day)", 0.0, 600.0, 30.0, 5.0)
-        systolic_bp = st.number_input("Systolic BP (mmHg)", 60.0, 250.0, 120.0, 1.0)
+        eye_strain       = st.selectbox("Discomfort / Eye-strain",   [1, 0], format_func=lambda x: "Yes" if x else "No")
+        redness          = st.selectbox("Redness in eye",             [1, 0], format_func=lambda x: "Yes" if x else "No")
+        screen_time      = st.number_input("Average screen time (hours/day)", 0.0, 24.0,  6.0, 0.5)
+        physical_activity= st.number_input("Physical activity (minutes/day)", 0.0, 600.0, 30.0, 5.0)
+        systolic_bp      = st.number_input("Systolic BP (mmHg)",              60.0, 250.0, 120.0, 1.0)
     with col2:
-        itchiness = st.selectbox("Itchiness / Irritation", [1, 0], format_func=lambda x: "Yes" if x else "No")
-        sleep_duration = st.number_input("Sleep duration (hours)", 0.0, 24.0, 7.0, 0.5)
-        sleep_quality = st.slider("Sleep quality (1 - Poor → 5 - Excellent)", 1, 5, 3)
-        ongoing_med = st.selectbox("Ongoing medication", [1, 0], format_func=lambda x: "Yes" if x else "No")
+        itchiness        = st.selectbox("Itchiness / Irritation",     [1, 0], format_func=lambda x: "Yes" if x else "No")
+        sleep_duration   = st.number_input("Sleep duration (hours)",          0.0, 24.0,  7.0, 0.5)
+        sleep_quality    = st.slider("Sleep quality (1 - Poor → 5 - Excellent)", 1, 5, 3)
+        ongoing_med      = st.selectbox("Ongoing medication",         [1, 0], format_func=lambda x: "Yes" if x else "No")
 
     submitted = st.form_submit_button("🔍 Predict Risk")
 
 if submitted:
     data = {
-        'Discomfort Eye-strain': eye_strain,
-        'Itchiness/Irritation in eye': itchiness,
-        'Redness in eye': redness,
-        'Average screen time': screen_time,
-        'Sleep duration': sleep_duration,
-        'Sleep quality': sleep_quality,
-        'Physical activity': physical_activity,
-        'Systolic_BP': systolic_bp,
-        'Ongoing medication': ongoing_med
+        'Discomfort Eye-strain':          eye_strain,
+        'Itchiness/Irritation in eye':    itchiness,
+        'Redness in eye':                 redness,
+        'Average screen time':            screen_time,
+        'Sleep duration':                 sleep_duration,
+        'Sleep quality':                  sleep_quality,
+        'Physical activity':              physical_activity,
+        'Systolic_BP':                    systolic_bp,
+        'Ongoing medication':             ongoing_med
     }
 
-    df = pd.DataFrame([data])
-    df = preprocess_input(df)
+    df     = pd.DataFrame([data])
+    df     = preprocess_input(df)
     scaled, aligned = align_and_scale(df)
     results = predict_all_models(scaled)
 
@@ -146,52 +169,43 @@ if submitted:
     results_df = pd.DataFrame(summary)
     st.dataframe(results_df, hide_index=True)
 
-    # --- Combined Visualization ---
-    fig, ax = plt.subplots(figsize=(6,4))
-    colors = ['#dc3545' if "High" in p else '#28a745' for p in results_df["Prediction"]]
+    fig, ax = plt.subplots(figsize=(6, 4))
+    colors  = ['#dc3545' if "High" in p else '#28a745' for p in results_df["Prediction"]]
     ax.bar(results_df["Model"], results_df["Probability (%)"], color=colors)
     ax.set_ylabel("Predicted Probability (%)")
     ax.set_title("Model-wise Predicted Risk Probability (Calibrated)")
     st.pyplot(fig)
 
-    # --- Explanation (same as before) ---
     st.divider()
     st.subheader("🧠 Explanation of Prediction")
-
     explanation = []
 
-    if eye_strain == 1: 
+    if eye_strain == 1:
         explanation.append("• Presence of **eye strain** indicates discomfort in focusing, a key sign of dryness.")
     if redness == 1:
         explanation.append("• **Redness** in eyes shows irritation and inflammation — common in Dry Eye Disease.")
     if itchiness == 1:
         explanation.append("• **Itchiness/Irritation** suggests tear film instability, increasing risk.")
-
     if screen_time > 6:
         explanation.append(f"• **High screen time ({screen_time} hrs/day)** leads to reduced blinking and poor lubrication.")
     elif screen_time < 3:
         explanation.append(f"• **Low screen time ({screen_time} hrs/day)** helps maintain normal tear moisture.")
-
     if sleep_duration < 6:
         explanation.append(f"• **Short sleep duration ({sleep_duration} hrs)** affects tear regeneration overnight.")
     elif sleep_duration >= 7:
         explanation.append(f"• **Good sleep duration ({sleep_duration} hrs)** supports healthy eye surface recovery.")
-
     if sleep_quality <= 2:
         explanation.append("• **Poor sleep quality** affects tear secretion and increases dryness risk.")
     elif sleep_quality >= 4:
         explanation.append("• **Good sleep quality** helps maintain tear stability.")
-
     if physical_activity < 20:
         explanation.append(f"• **Low physical activity ({physical_activity} mins/day)** may reduce circulation and eye hydration.")
     elif physical_activity >= 40:
         explanation.append(f"• **Active lifestyle ({physical_activity} mins/day)** improves eye health and reduces risk.")
-
     if systolic_bp > 135:
-        explanation.append(f"• **Higher BP ({systolic_bp} mmHg)** may slightly affect eye blood flow, contributing to dryness.")
+        explanation.append(f"• **Higher BP ({systolic_bp} mmHg)** may slightly affect eye blood flow.")
     elif systolic_bp < 130:
         explanation.append(f"• **Normal BP ({systolic_bp} mmHg)** helps maintain healthy ocular pressure.")
-
     if ongoing_med == 1:
         explanation.append("• **Ongoing medication** use can include drugs that cause eye dryness as a side effect.")
     else:

@@ -1,4 +1,4 @@
-Smart Prediction of Dry Eye Disease using Machine Learning
+### Smart Prediction of Dry Eye Disease using Machine Learning
 
 ## 📌 Project Overview
 Dry Eye Disease (DED) is a common ocular condition that affects tear film stability and ocular surface health. Early identification is important to prevent discomfort, visual disturbances, and long-term complications. This project applies machine learning techniques to predict Dry Eye Disease using clinical and diagnostic features. Multiple classification models, including Random Forest, Support Vector Machine, XGBoost, and LightGBM, are trained and evaluated. To improve model performance and interpretability, various feature selection techniques such as ANOVA F-test, Random Forest feature importance, Mutual Information, and Permutation Importance are implemented and compared.
@@ -30,3 +30,6 @@ The objective of this project is to develop an accurate and reliable machine lea
 ## 📊 Results
 - comparing the results of four models
 - evaluating the model performance
+
+## Demo Link
+https://dry-eye-disease-prediction-using-machine-learning.streamlit.app/
